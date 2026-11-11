@@ -1,0 +1,6 @@
+match_id,date,venue,team1,team2,winner,team1_score,team2_score
+M001,2026-04-01,Bengaluru,Falcons,Titans,Falcons,178,165
+M002,2026-04-03,Chennai,Titans,Warriors,Warriors,154,158
+M003,2026-04-05,Mumbai,Falcons,Warriors,Falcons,192,181
+M004,2026-04-07,Delhi,Titans,Falcons,Titans,171,160
+M005,2026-04-09,Hyderabad,Warriors,Falcons,Warriors,186,179

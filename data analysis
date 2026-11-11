@@ -1,0 +1,89 @@
+from pathlib import Path
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "dataset"
+OUT = ROOT / "outputs"
+CHARTS = ROOT / "visualizations"
+OUT.mkdir(exist_ok=True)
+CHARTS.mkdir(exist_ok=True)
+
+matches = pd.read_csv(DATA / "matches.csv")
+batting = pd.read_csv(DATA / "batting.csv")
+bowling = pd.read_csv(DATA / "bowling.csv")
+
+# Batting metrics
+batting["strike_rate"] = (batting["runs"] / batting["balls_faced"] * 100).round(2)
+batting_summary = batting.groupby("player").agg(
+    matches=("match_id", "nunique"),
+    runs=("runs", "sum"),
+    balls_faced=("balls_faced", "sum"),
+    dismissals=("dismissed", "sum"),
+    fours=("fours", "sum"),
+    sixes=("sixes", "sum")
+).reset_index()
+batting_summary["batting_average"] = (
+    batting_summary["runs"] / batting_summary["dismissals"].replace(0, pd.NA)
+).round(2)
+batting_summary["strike_rate"] = (
+    batting_summary["runs"] / batting_summary["balls_faced"] * 100
+).round(2)
+batting_summary.to_csv(OUT / "batting_summary.csv", index=False)
+
+# Bowling metrics
+bowling_summary = bowling.groupby("player").agg(
+    matches=("match_id", "nunique"),
+    overs=("overs", "sum"),
+    runs_conceded=("runs_conceded", "sum"),
+    wickets=("wickets", "sum")
+).reset_index()
+bowling_summary["economy_rate"] = (
+    bowling_summary["runs_conceded"] / bowling_summary["overs"]
+).round(2)
+bowling_summary["bowling_average"] = (
+    bowling_summary["runs_conceded"] / bowling_summary["wickets"].replace(0, pd.NA)
+).round(2)
+bowling_summary.to_csv(OUT / "bowling_summary.csv", index=False)
+
+# Team results
+wins = matches["winner"].value_counts().rename_axis("team").reset_index(name="wins")
+wins.to_csv(OUT / "team_wins.csv", index=False)
+
+sns.set_theme(style="whitegrid")
+plt.figure(figsize=(8, 5))
+sns.barplot(data=batting_summary, x="player", y="runs")
+plt.title("Total Runs by Player")
+plt.xlabel("Player")
+plt.ylabel("Runs")
+plt.tight_layout()
+plt.savefig(CHARTS / "runs_by_player.png", dpi=150)
+plt.close()
+
+plt.figure(figsize=(8, 5))
+sns.barplot(data=bowling_summary, x="player", y="wickets")
+plt.title("Total Wickets by Bowler")
+plt.xlabel("Bowler")
+plt.ylabel("Wickets")
+plt.tight_layout()
+plt.savefig(CHARTS / "wickets_by_bowler.png", dpi=150)
+plt.close()
+
+plt.figure(figsize=(8, 5))
+sns.barplot(data=wins, x="team", y="wins")
+plt.title("Matches Won by Team")
+plt.xlabel("Team")
+plt.ylabel("Wins")
+plt.tight_layout()
+plt.savefig(CHARTS / "team_wins.png", dpi=150)
+plt.close()
+
+print("\nBATTTING SUMMARY")
+print(batting_summary.to_string(index=False))
+print("\nBOWLING SUMMARY")
+print(bowling_summary.to_string(index=False))
+print("\nTEAM WINS")
+print(wins.to_string(index=False))
+print(f"\nAnalysis complete. CSV outputs: {OUT}")
+print(f"Charts saved in: {CHARTS}")
